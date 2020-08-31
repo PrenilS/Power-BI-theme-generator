@@ -2,76 +2,97 @@ library(shiny)
 library(colourpicker)
 library(ggplot2)
 library(shinyjs)
+library(reshape2)
 
-theme_set(
-    theme_minimal() +
-        theme(legend.position = "top")
-)
+iris2 <- melt(iris, id.vars = "Species")
+
+theme_set(theme_minimal() +
+            theme(legend.position = "top"))
 
 
-ui<- fluidPage(
-    useShinyjs(),
-    fluidRow(
-        column(3,
-               colourpicker::colourInput("pgcol", "Select page background", "gray",
-                    allowTransparent = TRUE)
-        ),
-        column(3,
-               colourpicker::colourInput("plotcol", "Select plot background", "white",
-                    allowTransparent = TRUE)
-        ),
-        column(3,
-               colourpicker::colourInput("titlecol", "Select Tile background", "gray",
-                    allowTransparent = TRUE)
-        ),
-        column(3,
-               colourpicker::colourInput("annotationcol", "Select text colour", "black",
-                    allowTransparent = TRUE))
+ui <- fluidPage(
+  useShinyjs(),
+  fluidRow(textInput("title", "Theme name", "MyTheme")),
+  fluidRow(
+    column(
+      3,
+      colourpicker::colourInput("pgcol", "Select page background", "gray",
+                                allowTransparent = TRUE)
     ),
-    fluidRow(
-        column(1,
-               colourpicker::colourInput("col1", "Select colour1", "#002d72",
-                        allowTransparent = TRUE)
-            ),
-        column(1,
-               colourpicker::colourInput("col2", "Select colour2", "#da291c",
-                           allowTransparent = TRUE)
-        ),
-        column(1,
-               colourpicker::colourInput("col3", "Select colour3", "#f2cd00",
-                           allowTransparent = TRUE)
-        ),
-        column(1,
-               colourpicker::colourInput("col4", "Select colour4", "#658d1b",
-                           allowTransparent = TRUE)
-        ),
-        column(1,
-               colourpicker::colourInput("col5", "Select colour5", "#0033a0",
-                           allowTransparent = TRUE)
-        ),
-        column(1,
-               colourpicker::colourInput("col6", "Select colour6", "#00aecc",
-                           allowTransparent = TRUE)
-        ),
-        column(1,
-               colourpicker::colourInput("col7", "Select colour7", "#95b9cb",
-                           allowTransparent = TRUE)
-        ),
-        column(1,
-               colourpicker::colourInput("col8", "Select colour8", "#0d1c42",
-                           allowTransparent = TRUE)
-        )
+    column(
+      3,
+      colourpicker::colourInput("plotcol", "Select plot background", "white",
+                                allowTransparent = TRUE)
     ),
-      wellPanel(
-              plotOutput("plot"),
-              id='wp1'
-          ),
-    downloadButton("downloadData", "Download theme")
+    column(
+      3,
+      colourpicker::colourInput("titlecol", "Select Tile background", "gray",
+                                allowTransparent = TRUE)
+    ),
+    column(
+      3,
+      colourpicker::colourInput(
+        "annotationcol",
+        "Select text colour",
+        "black",
+        allowTransparent = TRUE
+      )
+    )
+  ),
+  fluidRow(
+    column(
+      1,
+      colourpicker::colourInput("col1", "Select colour1", "#002d72",
+                                allowTransparent = TRUE)
+    ),
+    column(
+      1,
+      colourpicker::colourInput("col2", "Select colour2", "#da291c",
+                                allowTransparent = TRUE)
+    ),
+    column(
+      1,
+      colourpicker::colourInput("col3", "Select colour3", "#f2cd00",
+                                allowTransparent = TRUE)
+    ),
+    column(
+      1,
+      colourpicker::colourInput("col4", "Select colour4", "#658d1b",
+                                allowTransparent = TRUE)
+    ),
+    column(
+      1,
+      colourpicker::colourInput("col5", "Select colour5", "#0033a0",
+                                allowTransparent = TRUE)
+    ),
+    column(
+      1,
+      colourpicker::colourInput("col6", "Select colour6", "#00aecc",
+                                allowTransparent = TRUE)
+    ),
+    column(
+      1,
+      colourpicker::colourInput("col7", "Select colour7", "#95b9cb",
+                                allowTransparent = TRUE)
+    ),
+    column(
+      1,
+      colourpicker::colourInput("col8", "Select colour8", "#0d1c42",
+                                allowTransparent = TRUE)
+    )
+  ),
+  wellPanel(fluidRow(
+    id = 'wp1',
+    column(6, plotOutput("plot")),
+    column(6, plotOutput("plot2"))
+  ), id = 'wp2')
+  ,
+  downloadButton("downloadData", "Download theme")
 )
 
 server <- function(input, output) {
-    values <- reactiveValues()
-    values$theme_out <- '{
+  values <- reactiveValues()
+  values$theme_out <- '{
         "name": "Light theme LS colours",
         "background": "#FFFFFF",
         "foreground": "#000000",
@@ -98,39 +119,144 @@ server <- function(input, output) {
             "#58595b",
             "#000000"
         ]}'
-        output$plot <- renderPlot({
-            cbp1 <- c(input$col1,input$col2,input$col3,input$col4,input$col5,input$col6,input$col7,input$col8)
-            ggplot(iris, aes(Sepal.Length, Sepal.Width))+geom_point(aes(color = Species, size=4))+scale_color_manual(values = cbp1) + 
-                ggtitle("Plot1")+
-                labs(y="Width", x = "Length")+
-                theme(
-                panel.background = element_rect(fill = input$plotcol,
-                                                colour = input$plotcol,
-                                                size = 0.5, linetype = "solid"),
-                plot.background = element_rect(fill = input$plotcol),
-                panel.grid.major = element_line(size = 0.5, linetype = 'solid',
-                                                colour = input$annotationcol), 
-                panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                                colour = input$annotationcol),
-                axis.text.x = element_text(color=input$annotationcol),
-                axis.text.y = element_text(color=input$annotationcol),
-                axis.title.x = element_text(color=input$annotationcol),
-                axis.title.y = element_text(color=input$annotationcol)
-            )
-        })
-        
-        observeEvent(input$pgcol,{
-            runjs(sprintf("
-            document.getElementById('%s').style.backgroundColor = '%s';", "wp1", input$pgcol))
-        })
-        
-        toListen <- reactive({
-            list(input$col1,input$col2,input$col3,input$col4,input$col5,input$col6,input$col7,input$col8)
-        })
-        
-        observeEvent(toListen(), {
-            values$theme_out = paste(sprintf('{
-            "name": "Generated theme",
+  output$plot <- renderPlot({
+    cbp1 <-
+      c(
+        input$col1,
+        input$col2,
+        input$col3,
+        input$col4,
+        input$col5,
+        input$col6,
+        input$col7,
+        input$col8
+      )
+    ggplot(iris, aes(Sepal.Length, Sepal.Width)) + geom_point(aes(color = Species, size =
+                                                                    4)) + scale_color_manual(values = cbp1) +
+      ggtitle("Plot1") +
+      labs(y = "Width", x = "Length") +
+      theme(
+        panel.background = element_rect(
+          fill = input$plotcol,
+          colour = input$plotcol,
+          size = 0.5,
+          linetype = "solid"
+        ),
+        plot.background = element_rect(fill = input$plotcol),
+        panel.grid.major = element_line(
+          size = 0.5,
+          linetype = 'solid',
+          colour = input$annotationcol
+        ),
+        panel.grid.minor = element_line(
+          size = 0.25,
+          linetype = 'solid',
+          colour = input$annotationcol
+        ),
+        axis.text.x = element_text(color = input$annotationcol),
+        axis.text.y = element_text(color = input$annotationcol),
+        axis.title.x = element_text(color = input$annotationcol),
+        axis.title.y = element_text(color = input$annotationcol),
+        legend.text=element_text(color=input$annotationcol,size=10),
+        plot.title = element_text(color=input$annotationcol, size=14)
+      )
+  })
+  
+  output$plot2 <- renderPlot({
+    cbp1 <-
+      c(input$col4, input$col5, input$col6, input$col7, input$col8)
+    ggplot(iris2, aes(x = Species, y = value, fill = variable)) +
+      geom_bar(stat = "identity", position = "dodge") +
+      scale_fill_manual(
+        values = cbp1,
+        name = "Iris\nMeasurements",
+        breaks = c(
+          "Sepal.Length",
+          "Sepal.Width",
+          "Petal.Length",
+          "Petal.Width"
+        ),
+        labels = c("Sepal Length", "Sepal Width", "Petal Length", "Petal Width")
+      ) +
+      ggtitle("Plot2") +
+      labs(y = "Freq", x = "Width") +
+      theme(
+        panel.background = element_rect(
+          fill = input$plotcol,
+          colour = input$plotcol,
+          size = 0.5,
+          linetype = "solid"
+        ),
+        plot.background = element_rect(fill = input$plotcol),
+        panel.grid.major = element_line(
+          size = 0.5,
+          linetype = 'solid',
+          colour = input$annotationcol
+        ),
+        panel.grid.minor = element_line(
+          size = 0.25,
+          linetype = 'solid',
+          colour = input$annotationcol
+        ),
+        axis.text.x = element_text(color = input$annotationcol),
+        axis.text.y = element_text(color = input$annotationcol),
+        axis.title.x = element_text(color = input$annotationcol),
+        axis.title.y = element_text(color = input$annotationcol),
+        legend.text=element_text(color=input$annotationcol,size=10),
+        plot.title = element_text(color=input$annotationcol, size=14)
+      )
+  })
+  
+  observeEvent(input$pgcol, {
+    runjs(
+      sprintf(
+        "
+            document.getElementById('%s').style.backgroundColor = '%s';",
+        "wp1",
+        input$pgcol
+      )
+    )
+    runjs(
+      sprintf(
+        "
+            document.getElementById('%s').style.backgroundColor = '%s';",
+        "wp2",
+        input$pgcol
+      )
+    )
+    runjs(
+      sprintf(
+        "
+            document.getElementById('%s').style.backgroundColor = '%s';",
+        "wp3",
+        input$pgcol
+      )
+    )
+  })
+  
+  toListen <- reactive({
+    list(
+      input$col1,
+      input$col2,
+      input$col3,
+      input$col4,
+      input$col5,
+      input$col6,
+      input$col7,
+      input$col8,
+      input$title,
+      input$pgcol,
+      input$plotcol,
+      input$titlecol,
+      input$annotationcol
+    )
+  })
+  
+  observeEvent(toListen(), {
+    values$theme_out = paste(
+      sprintf(
+        '{
+            "name": "%s",
             "background": "#FFFFFF",
             "foreground": "#000000",
             "tableAccent": "#000000",
@@ -355,12 +481,37 @@ server <- function(input, output) {
                     }
                 ]
                 }},',
-                                             input$col1,input$col2,input$col3,input$col4,input$col5,input$col6,input$col7,input$col8,
-                                             input$annotationcol,input$annotationcol,input$annotationcol,input$plotcol,input$col1,input$plotcol,
-                                             input$annotationcol,input$pgcol,input$pgcol,input$plotcol,input$annotationcol,input$annotationcol,input$annotationcol,
-                                             input$annotationcol,input$titlecol,input$annotationcol,input$annotationcol,input$annotationcol,input$annotationcol,
-                                             input$plotcol),
-                                     sprintf(
+        input$title,
+        input$col1,
+        input$col2,
+        input$col3,
+        input$col4,
+        input$col5,
+        input$col6,
+        input$col7,
+        input$col8,
+        input$annotationcol,
+        input$annotationcol,
+        input$annotationcol,
+        input$plotcol,
+        input$col1,
+        input$plotcol,
+        input$annotationcol,
+        input$pgcol,
+        input$pgcol,
+        input$plotcol,
+        input$annotationcol,
+        input$annotationcol,
+        input$annotationcol,
+        input$annotationcol,
+        input$titlecol,
+        input$annotationcol,
+        input$annotationcol,
+        input$annotationcol,
+        input$annotationcol,
+        input$plotcol
+      ),
+      sprintf(
         '"slicer": {
             "*": {
                 "*": [
@@ -405,21 +556,28 @@ server <- function(input, output) {
             }
         }
         }
-                                       }',input$annotationcol,input$annotationcol,input$annotationcol), spe="")
-        })
-        
-        
-        
-        output$downloadData <- downloadHandler(
-            filename = function() {
-                paste("theme_out", ".json", sep = "")
-            },
-            content = function(file) {
-                writeLines(values$theme_out, file)
-            })
-        
+                                       }',
+        input$annotationcol,
+        input$annotationcol,
+        input$annotationcol
+      ),
+      spe = ""
+    )
+  })
+  
+  
+  
+  output$downloadData <- downloadHandler(
+    filename = function() {
+      paste(input$title, ".json", sep = "")
+    },
+    content = function(file) {
+      writeLines(values$theme_out, file)
     }
+  )
+  
+}
 
 
-# Run the application 
+# Run the application
 shinyApp(ui = ui, server = server)
